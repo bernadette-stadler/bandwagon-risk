@@ -4,25 +4,116 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+library(readxl)
+library(janitor)
+library(ggplot2)
+library(cowplot)
+library(tidyverse)
 ```
 
-## R Markdown
+```{r read in data, include=FALSE}
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+happy_data <- read_excel("Chapter2OnlineData.xls") %>% clean_names()
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+repression_data <-read_excel("PTS-2019.xlsx")
 
-```{r cars}
-summary(cars)
+wbdata <- read_csv("data2.csv") %>% clean_names()
 ```
 
-## Including Plots
+```{r chart 1}
 
-You can also embed plots, for example:
+Egypt <- happy_data %>% filter(country_name == "Egypt")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+Ukraine <- happy_data %>% filter(country_name == "Ukraine")
+
+HK <- happy_data %>% filter(country_name == "Hong Kong S.A.R. of China")
+
+Kyrgyzstan <- happy_data %>% filter(country_name == "Kyrgyzstan")
+
+HKplot <- ggplot(HK, aes(x = year, y = life_ladder)) + 
+  geom_line() + 
+  geom_vline(xintercept = 2014, linetype="dotted") + 
+  labs(x = "Year", y ="World Happiness Report Cantril Ladder", title = "Hong Kong")+
+  scale_y_continuous(limits = c(1, 10))+
+  scale_x_continuous(breaks = c(2008, 2012, 2016))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+Kplot <- ggplot(Kyrgyzstan, aes(x = year, y = life_ladder)) + 
+  geom_line() + 
+  geom_vline(xintercept = 2010, linetype="dotted") + 
+  labs(x = "Year", y ="", title = "Kyrgyzstan")+
+  scale_y_continuous(limits = c(1, 10))+
+  scale_x_continuous(breaks = c(2008, 2012, 2016))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+
+Eplot <- ggplot(Egypt, aes(x = year, y = life_ladder)) + 
+  geom_line() +
+  geom_vline(xintercept = 2008, linetype="dotted") + 
+  labs(x = "Year", y = "World Happiness Report Cantril Ladder", title = "Egypt")+
+  scale_y_continuous(limits = c(1, 10))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+Uplot <- ggplot(Ukraine, aes(x =year, y = life_ladder))+
+  geom_line() + 
+  geom_vline(xintercept = 2013, linetype="dotted")+
+  labs(x = "Year", y = "", title = "Ukraine")+
+  scale_y_continuous(limits = c(1, 10))+
+  scale_x_continuous(breaks = c(2008, 2012, 2016))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+doubleplot <- plot_grid(Eplot, Uplot)
+
+png(filename = "happinesstest.png", width = 640, height = 380)
+
+doubleplot
+
+dev.off()
+
+doubleplot2 <-plot_grid(HKplot, Kplot)
+
+png(filename = "happinesstest2.png", width = 640, height = 380)
+
+doubleplot2
+
+dev.off()
+  
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r repression}
+
+repression_data_chart <- repression_data %>%
+  filter(Country %in% c("Egypt", "Ukraine", "Kyrgyzstan")) %>%
+  mutate(PTS_S = as.numeric(PTS_S)) %>%
+  mutate(Year = as.numeric(Year)) %>% 
+  filter(Year >= 2005)
+
+dat.vline <- data.frame(Country = c("Egypt", "Ukraine", "Kyrgyzstan"), xp = c(2008, 2013, 2010))
+
+repression_chart <- ggplot() +
+    geom_line(data =repression_data_chart, aes(x = Year, y = PTS_S)) +
+    scale_y_continuous(limits=c(1,5))+
+    geom_vline(data = dat.vline, aes(xintercept =xp), linetype = "dotted")+
+    facet_wrap(~Country)+
+    labs(y = "Repression Level")+
+    theme_minimal()
+  
+  png(filename = "repression.png", width = 640, height = 380)
+  
+  repression_chart 
+  
+  dev.off()
+  
+
+```
+
+```{r social capital}
+
+```
+
